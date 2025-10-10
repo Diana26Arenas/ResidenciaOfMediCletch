@@ -1,24 +1,36 @@
 <?php
+
 namespace App\Models;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class Usuarios extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
-    use HasFactory, Notifiable;
-
-    protected $table = 'usuarios';
+    use Notifiable;
 
     protected $fillable = [
-        'nombre', 'email', 'password', 'rol'
+        'name',
+        'email',
+        'password',
     ];
 
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = [
+        'password',
+    ];
 
-    // Relaciones
-    public function citas() {
-        return $this->hasMany(CitaConsulta::class, 'usuario_id');
+    // Métodos requeridos por JWT
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
     }
 }
+
+
 
