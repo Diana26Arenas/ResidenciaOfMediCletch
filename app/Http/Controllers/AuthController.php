@@ -7,55 +7,75 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    // Registro
-    public function register(Request $request)
+     public function register(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|unique:users',
+            'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
         ]);
 
         $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
         ]);
 
-        $token = JWTAuth::fromUser($user);
+        try {
+            $token = JWTAuth::fromUser($user);
+        } catch (JWTException $e) {
+            return response()->json(['error' => 'No se pudo crear el token'], 500);
+        }
 
-        return response()->json(compact('user', 'token'), 201);
+        return response()->json([
+            'token' => $token,
+            'user' => $user,
+        ], 201);
     }
 
-    // Login
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
 
-        if (!$token = auth('api')->attempt($credentials)) {
-            return response()->json(['error' => 'Credenciales inválidas'], 401);
+        try {
+            if (! $token = JWTAuth::attempt($credentials)) {
+                return response()->json(['error' => 'Credenciales no válidas'], 401);
+            }
+        } catch (JWTException $e) {
+            return response()->json(['error' => 'Error al crear el token'], 500);
         }
 
-        return response()->json(compact('token'));
+        return response()->json([
+            'token' => $token,
+            'expires_in' => auth('api')->factory()->getTTL() * 60,
+        ]);
     }
 
-    // Logout
     public function logout()
     {
         try {
-            auth('api')->logout();
-            return response()->json(['message' => 'Sesión cerrada correctamente']);
+            JWTAuth::invalidate(JWTAuth::getToken());
+            return response()->json(['message' => 'Cierre de sesión exitoso']);
         } catch (JWTException $e) {
             return response()->json(['error' => 'Error al cerrar sesión'], 500);
         }
     }
 
-    // Usuario autenticado
-    public function me()
+    public function getUser()
     {
-        return response()->json(auth('api')->user());
+        try {
+            $user = Auth::user();
+            if (! $user) {
+                return response()->json(['error' => 'Usuario no encontrado'], 404);
+            }
+            return response()->json($user);
+        } catch (JWTException $e) {
+            return response()->json(['error' => 'Error al obtener el perfil'], 500);
+        }
     }
+    //
 }
