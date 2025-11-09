@@ -10,6 +10,17 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
+    // Método auxiliar para responder con el token en el formato correcto
+    protected function respondWithToken($token, $user = null, $statusCode = 200)
+    {
+        return response()->json([
+            'access_token' => $token, // <-- CLAVE: 'access_token'
+            'token_type' => 'bearer',
+            'expires_in' => Auth::guard('api')->factory()->getTTL() * 60,
+            'user' => $user ?? Auth::guard('api')->user()
+        ], $statusCode);
+    }
+
     public function register(Request $request)
     {
         $request->validate([
@@ -24,23 +35,24 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        $token = JWTAuth::fromUser($user);
+        // Genera el token e inicia sesión con el usuario recién creado
+        $token = Auth::guard('api')->login($user);
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token
-        ], 201);
+        // Usa el método auxiliar para devolver el token con la clave 'access_token'
+        return $this->respondWithToken($token, $user, 201);
     }
 
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
 
+        // Intenta autenticar y obtener el token
         if (!$token = Auth::guard('api')->attempt($credentials)) {
             return response()->json(['error' => 'Credenciales inválidas'], 401);
         }
 
-        return response()->json(['token' => $token]);
+        // Usa el método auxiliar para devolver el token con la clave 'access_token'
+        return $this->respondWithToken($token);
     }
 
     public function logout()
