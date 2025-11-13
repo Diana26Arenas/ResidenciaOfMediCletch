@@ -27,8 +27,10 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 
     // Recursos de la Aplicación (CRUD completo)
-    // Usamos 'except' para excluir métodos que no se usan en API (create/edit)
-    Route::resource('users', UserController::class)->except(['create', 'edit']);
-    Route::resource('consultorios', ConsultorioController::class)->except(['create', 'edit']);
-    Route::resource('medicos', MedicoController::class)->except(['create', 'edit']);
+    // Usamos apiResource para generar todas las rutas RESTful necesarias
+    Route::apiResource('users', UserController::class); 
+    // CRUD para Consultorios
+    Route::apiResource('consultorios', ConsultorioController::class);
+    // CRUD para Médicos
+    Route::apiResource('medicos', MedicoController::class); 
 });

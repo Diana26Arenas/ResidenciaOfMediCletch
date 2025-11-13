@@ -10,15 +10,17 @@ class Medico extends Model
     use HasFactory;
 
     protected $fillable = [
-        'nombre',
-        'especialidad',
-        'email',
-        'telefono',
-        'consultorio_id',
+        'name', 
+        'specialty', 
+        'consultorio_id', 
+        'user_id' // Clave foránea para la relación con el usuario (login)
     ];
 
-    public function consultorio()
+    /**
+     * Define la relación: Un médico pertenece a un usuario (la cuenta de login).
+     */
+    public function user()
     {
-        return $this->belongsTo(Consultorio::class);
+        return $this->belongsTo(User::class);
     }
 }

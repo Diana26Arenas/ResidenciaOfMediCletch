@@ -9,14 +9,24 @@ class Consultorio extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     * Los atributos que se pueden asignar masivamente.
+     * @var array<int, string>
+     */
     protected $fillable = [
-        'nombre',
-        'direccion',
-        'telefono',
+        'numero_consultorio',
+        'piso',
+        'descripcion',
     ];
 
+    /**
+     * Define la relación inversa con Medico.
+     * Un consultorio puede tener varios médicos asignados.
+     */
     public function medicos()
     {
-        return $this->hasMany(Medico::class);
+        // El consultorio tiene la clave foránea en la tabla medicos (consultorio_id)
+        return $this->hasMany(Medico::class, 'consultorio_id');
     }
 }
